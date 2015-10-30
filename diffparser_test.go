@@ -85,41 +85,49 @@ func (s *suite) TestHunk(c *gc.C) {
 
 	expectedOrigLines := []diffparser.DiffLine{
 		{
-			Mode:    diffparser.UNCHANGED,
-			Number:  1,
-			Content: "some",
+			Mode:     diffparser.UNCHANGED,
+			Number:   1,
+			Content:  "some",
+			Position: 7,
 		}, {
-			Mode:    diffparser.UNCHANGED,
-			Number:  2,
-			Content: "lines",
+			Mode:     diffparser.UNCHANGED,
+			Number:   2,
+			Content:  "lines",
+			Position: 8,
 		}, {
-			Mode:    diffparser.REMOVED,
-			Number:  3,
-			Content: "in",
+			Mode:     diffparser.REMOVED,
+			Number:   3,
+			Content:  "in",
+			Position: 9,
 		}, {
-			Mode:    diffparser.UNCHANGED,
-			Number:  4,
-			Content: "file1",
+			Mode:     diffparser.UNCHANGED,
+			Number:   4,
+			Content:  "file1",
+			Position: 10,
 		},
 	}
 
 	expectedNewLines := []diffparser.DiffLine{
 		{
-			Mode:    diffparser.ADDED,
-			Number:  1,
-			Content: "add a line",
+			Mode:     diffparser.ADDED,
+			Number:   1,
+			Content:  "add a line",
+			Position: 6,
 		}, {
-			Mode:    diffparser.UNCHANGED,
-			Number:  2,
-			Content: "some",
+			Mode:     diffparser.UNCHANGED,
+			Number:   2,
+			Content:  "some",
+			Position: 7,
 		}, {
-			Mode:    diffparser.UNCHANGED,
-			Number:  3,
-			Content: "lines",
+			Mode:     diffparser.UNCHANGED,
+			Number:   3,
+			Content:  "lines",
+			Position: 8,
 		}, {
-			Mode:    diffparser.UNCHANGED,
-			Number:  4,
-			Content: "file1",
+			Mode:     diffparser.UNCHANGED,
+			Number:   4,
+			Content:  "file1",
+			Position: 10,
 		},
 	}
 

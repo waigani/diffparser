@@ -40,9 +40,10 @@ const (
 )
 
 type DiffLine struct {
-	Mode    DiffLineMode
-	Number  int
-	Content string
+	Mode     DiffLineMode
+	Number   int
+	Content  string
+	Position int // the line in the diff
 }
 
 type diffHunk struct {
@@ -126,7 +127,7 @@ func Parse(diffString string) (*Diff, error) {
 	newFilePrefix := "+++ b/"
 
 	// Parse each line of diff.
-	for _, l := range lines {
+	for i, l := range lines {
 		switch {
 		case strings.HasPrefix(l, "diff "):
 			inHunk = false
@@ -195,8 +196,9 @@ func Parse(diffString string) (*Diff, error) {
 				return nil, errors.Trace(err)
 			}
 			line := DiffLine{
-				Mode:    *m,
-				Content: l[1:],
+				Mode:     *m,
+				Content:  l[1:],
+				Position: i + 1,
 			}
 			newLine := line
 			origLine := line
