@@ -126,8 +126,9 @@ func Parse(diffString string) (*Diff, error) {
 	oldFilePrefix := "--- a/"
 	newFilePrefix := "+++ b/"
 
+	var hunkLineCount int
 	// Parse each line of diff.
-	for i, l := range lines {
+	for _, l := range lines {
 		switch {
 		case strings.HasPrefix(l, "diff "):
 			inHunk = false
@@ -151,7 +152,7 @@ func Parse(diffString string) (*Diff, error) {
 			// Start new hunk.
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
-
+			hunkLineCount = 0
 			// Parse hunk heading for ranges
 			re := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+),?(\d+)? @@`)
 			m := re.FindStringSubmatch(l)
@@ -191,6 +192,7 @@ func Parse(diffString string) (*Diff, error) {
 			ADDEDCount = hunk.NewRange.Start
 			REMOVEDCount = hunk.OrigRange.Start
 		case inHunk && isSourceLine(l):
+			hunkLineCount++
 			m, err := lineMode(l)
 			if err != nil {
 				return nil, errors.Trace(err)
@@ -198,7 +200,7 @@ func Parse(diffString string) (*Diff, error) {
 			line := DiffLine{
 				Mode:     *m,
 				Content:  l[1:],
-				Position: i + 1,
+				Position: hunkLineCount,
 			}
 			newLine := line
 			origLine := line

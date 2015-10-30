@@ -88,22 +88,22 @@ func (s *suite) TestHunk(c *gc.C) {
 			Mode:     diffparser.UNCHANGED,
 			Number:   1,
 			Content:  "some",
-			Position: 7,
+			Position: 2,
 		}, {
 			Mode:     diffparser.UNCHANGED,
 			Number:   2,
 			Content:  "lines",
-			Position: 8,
+			Position: 3,
 		}, {
 			Mode:     diffparser.REMOVED,
 			Number:   3,
 			Content:  "in",
-			Position: 9,
+			Position: 4,
 		}, {
 			Mode:     diffparser.UNCHANGED,
 			Number:   4,
 			Content:  "file1",
-			Position: 10,
+			Position: 5,
 		},
 	}
 
@@ -112,22 +112,22 @@ func (s *suite) TestHunk(c *gc.C) {
 			Mode:     diffparser.ADDED,
 			Number:   1,
 			Content:  "add a line",
-			Position: 6,
+			Position: 1,
 		}, {
 			Mode:     diffparser.UNCHANGED,
 			Number:   2,
 			Content:  "some",
-			Position: 7,
+			Position: 2,
 		}, {
 			Mode:     diffparser.UNCHANGED,
 			Number:   3,
 			Content:  "lines",
-			Position: 8,
+			Position: 3,
 		}, {
 			Mode:     diffparser.UNCHANGED,
 			Number:   4,
 			Content:  "file1",
-			Position: 10,
+			Position: 5,
 		},
 	}
 
