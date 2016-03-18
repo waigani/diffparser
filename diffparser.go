@@ -52,10 +52,12 @@ type diffHunk struct {
 }
 
 type DiffFile struct {
-	Mode     FileMode
-	OrigName string
-	NewName  string
-	Hunks    []*diffHunk
+	Mode      FileMode
+	OrigName  string
+	NewName   string
+	Additions int
+	Deletions int
+	Hunks     []*diffHunk
 }
 
 type Diff struct {
@@ -211,11 +213,13 @@ func Parse(diffString string) (*Diff, error) {
 				newLine.Number = ADDEDCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
 				ADDEDCount++
+				file.Additions++
 
 			case REMOVED:
 				origLine.Number = REMOVEDCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
 				REMOVEDCount++
+				file.Deletions++
 
 			case UNCHANGED:
 				newLine.Number = ADDEDCount

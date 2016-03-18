@@ -40,34 +40,46 @@ func (s *suite) TestFileModeAndNaming(c *gc.C) {
 	c.Assert(diff.Files, gc.HasLen, 5)
 
 	for i, expected := range []struct {
-		mode     diffparser.FileMode
-		origName string
-		newName  string
+		mode      diffparser.FileMode
+		origName  string
+		newName   string
+		Additions int
+		Deletions int
 	}{
 		{
-			mode:     diffparser.MODIFIED,
-			origName: "file1",
-			newName:  "file1",
+			mode:      diffparser.MODIFIED,
+			origName:  "file1",
+			newName:   "file1",
+			Additions: 1,
+			Deletions: 1,
 		},
 		{
-			mode:     diffparser.DELETED,
-			origName: "file2",
-			newName:  "",
+			mode:      diffparser.DELETED,
+			origName:  "file2",
+			newName:   "",
+			Additions: 0,
+			Deletions: 4,
 		},
 		{
-			mode:     diffparser.DELETED,
-			origName: "file3",
-			newName:  "",
+			mode:      diffparser.DELETED,
+			origName:  "file3",
+			newName:   "",
+			Additions: 0,
+			Deletions: 4,
 		},
 		{
-			mode:     diffparser.NEW,
-			origName: "",
-			newName:  "file4",
+			mode:      diffparser.NEW,
+			origName:  "",
+			newName:   "file4",
+			Additions: 1,
+			Deletions: 0,
 		},
 		{
-			mode:     diffparser.NEW,
-			origName: "",
-			newName:  "newname",
+			mode:      diffparser.NEW,
+			origName:  "",
+			newName:   "newname",
+			Additions: 4,
+			Deletions: 0,
 		},
 	} {
 		file := diff.Files[i]
@@ -75,6 +87,8 @@ func (s *suite) TestFileModeAndNaming(c *gc.C) {
 		c.Assert(file.Mode, gc.Equals, expected.mode)
 		c.Assert(file.OrigName, gc.Equals, expected.origName)
 		c.Assert(file.NewName, gc.Equals, expected.newName)
+		c.Assert(file.Additions, gc.Equals, expected.Additions)
+		c.Assert(file.Deletions, gc.Equals, expected.Deletions)
 	}
 }
 
