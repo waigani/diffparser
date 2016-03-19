@@ -19,8 +19,9 @@ func Test(t *testing.T) {
 
 type suite struct {
 	jt.CleanupSuite
-	rawdiff string
-	diff    *diffparser.Diff
+	rawdiff  string
+	rawdiff2 string
+	diff     *diffparser.Diff
 }
 
 var _ = gc.Suite(&suite{})
@@ -29,6 +30,9 @@ func (s *suite) SetUpSuite(c *gc.C) {
 	byt, err := ioutil.ReadFile("example.diff")
 	c.Assert(err, jc.ErrorIsNil)
 	s.rawdiff = string(byt)
+	byt, err = ioutil.ReadFile("example2.diff")
+	c.Assert(err, jc.ErrorIsNil)
+	s.rawdiff2 = string(byt)
 }
 
 // TODO(waigani) tests are missing more creative names (spaces, special
@@ -146,4 +150,14 @@ func (s *suite) TestHunk(c *gc.C) {
 	for i, line := range expectedNewLines {
 		c.Assert(*newRange.Lines[i], gc.DeepEquals, line)
 	}
+}
+
+func (s *suite) TestParseHeader(c *gc.C) {
+	diff, err := diffparser.Parse(s.rawdiff2)
+	c.Assert(err, jc.ErrorIsNil)
+	c.Assert(diff.Files, gc.HasLen, 1)
+
+	c.Assert(diff.Files[0].OrigName, gc.Equals, "includes/s_header.php")
+	c.Assert(diff.Files[0].NewName, gc.Equals, "")
+	c.Assert(diff.Files[0].Mode, gc.Equals, diffparser.DELETED)
 }
