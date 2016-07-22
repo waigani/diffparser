@@ -1,13 +1,13 @@
 DiffParser
 ===========
 
-DiffParser is a Golang package which parse's a git diff.
+DiffParser is a Golang package for parsing git diffs. This supports diffs containing binary files. This library is forked from http://github.com/waigani/diffparser
 
 Install
 -------
 
 ```sh
-go get http://github.com/waigani/diffparser
+go get http://github.com/appscode/diffparser
 ```
 
 Usage Example
@@ -18,7 +18,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/waigani/diffparser"
+	"github.com/appscode/diffparser"
 )
 
 // error handling left out for brevity

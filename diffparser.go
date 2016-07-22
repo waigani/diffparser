@@ -1,14 +1,14 @@
+// Copyright (c) 2016 AppsCode Inc. <https://github.com/appscode>
 // Copyright (c) 2015 Jesse Meek <https://github.com/waigani>
 // This program is Free Software see LICENSE file for details.
 
 package diffparser
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/juju/errors"
 )
 
 type FileMode int
@@ -17,6 +17,8 @@ const (
 	DELETED FileMode = iota
 	MODIFIED
 	NEW
+	MOVE_AWAY
+	MOVE_HERE
 )
 
 type diffRange struct {
@@ -106,7 +108,7 @@ func lineMode(line string) (*DiffLineMode, error) {
 	case "-":
 		m = REMOVED
 	default:
-		return nil, errors.Errorf("could not parse line mode for line: %q", line)
+		return nil, fmt.Errorf("could not parse line mode for line: %q", line)
 	}
 	return &m, nil
 }
@@ -114,10 +116,10 @@ func lineMode(line string) (*DiffLineMode, error) {
 // Parse takes a diff, such as produced by "git diff", and parses it into a
 // Diff struct.
 func Parse(diffString string) (*Diff, error) {
+
 	var diff Diff
 	diff.Raw = diffString
 	lines := strings.Split(diffString, "\n")
-
 	var file *DiffFile
 	var hunk *diffHunk
 	var ADDEDCount int
@@ -125,18 +127,15 @@ func Parse(diffString string) (*Diff, error) {
 	var inHunk bool
 	oldFilePrefix := "--- a/"
 	newFilePrefix := "+++ b/"
-
 	var hunkLineCount int
 	// Parse each line of diff.
 	for _, l := range lines {
 		switch {
 		case strings.HasPrefix(l, "diff "):
 			inHunk = false
-
 			// Start a new file.
 			file = &DiffFile{}
 			diff.Files = append(diff.Files, file)
-
 			// File mode.
 			file.Mode = MODIFIED
 		case l == "+++ /dev/null":
@@ -147,32 +146,71 @@ func Parse(diffString string) (*Diff, error) {
 			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
 		case strings.HasPrefix(l, newFilePrefix):
 			file.NewName = strings.TrimPrefix(l, newFilePrefix)
-		case strings.HasPrefix(l, "@@ "):
-			inHunk = true
+		case strings.HasPrefix(l, "Binary files"):
+			s := strings.Fields(l)
+			file.OrigName = strings.TrimPrefix(s[2], "a/")
+			if file.OrigName == "/dev/null" {
+				file.Mode = NEW
+				file.OrigName = ""
+			}
+			file.NewName = strings.TrimPrefix(s[4], "b/")
+			if file.NewName == "/dev/null" {
+				file.NewName = ""
+				file.Mode = DELETED
+			}
+		case strings.HasPrefix(l, "rename from"):
+			s := strings.Fields(l)
+			file.NewName = s[len(s)-1]
+			file.OrigName = ""
+			file.Mode = MOVE_AWAY
+			hunk = &diffHunk{}
+			file.Hunks = append(file.Hunks, hunk)
+		case strings.HasPrefix(l, "rename to"):
+			s := strings.Fields(l)
+			name := file.NewName
+			file.OrigName = s[len(s)-1]
+			// Start a new file.
+			file = &DiffFile{}
+			file.Mode = MOVE_HERE
+			diff.Files = append(diff.Files, file)
+			file.NewName = s[len(s)-1]
+			file.OrigName = name
 			// Start new hunk.
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
+		case strings.HasPrefix(l, "@@ "):
+			inHunk = true
+			// Start new hunk.
+			if file.Hunks == nil {
+				hunk = &diffHunk{}
+				file.Hunks = append(file.Hunks, hunk)
+			}
 			hunkLineCount = 0
 			// Parse hunk heading for ranges
-			re := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+),?(\d+)? @@`)
+			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@`)
 			m := re.FindStringSubmatch(l)
 			a, err := strconv.Atoi(m[1])
 			if err != nil {
 				return nil, err
 			}
-			b, err := strconv.Atoi(m[2])
-			if err != nil {
-				return nil, err
+			var b int
+			if m[2] == "" {
+				b = 0
+			} else {
+				b, err = strconv.Atoi(m[2])
+				if err != nil {
+					return nil, err
+				}
 			}
 			c, err := strconv.Atoi(m[3])
 			if err != nil {
-				return nil, errors.Trace(err)
+				return nil, err
 			}
 			d := c
 			if len(m[4]) > 0 {
 				d, err = strconv.Atoi(m[4])
 				if err != nil {
-					return nil, errors.Trace(err)
+					return nil, err
 				}
 			}
 
@@ -195,7 +233,7 @@ func Parse(diffString string) (*Diff, error) {
 			hunkLineCount++
 			m, err := lineMode(l)
 			if err != nil {
-				return nil, errors.Trace(err)
+				return nil, err
 			}
 			line := DiffLine{
 				Mode:     *m,
@@ -227,7 +265,6 @@ func Parse(diffString string) (*Diff, error) {
 			}
 		}
 	}
-
 	return &diff, nil
 }
 
