@@ -1,3 +1,5 @@
+[![CLA assistant](https://cla-assistant.io/readme/badge/appscode/diffparser)](https://cla-assistant.io/appscode/diffparser)
+
 DiffParser
 ===========
 
