@@ -51,6 +51,7 @@ type DiffLine struct {
 type diffHunk struct {
 	OrigRange diffRange
 	NewRange  diffRange
+	ModifyRange diffRange
 }
 
 type DiffFile struct {
@@ -138,15 +139,15 @@ func Parse(diffString string) (*Diff, error) {
 			diff.Files = append(diff.Files, file)
 			// File mode.
 			file.Mode = MODIFIED
-		case l == "+++ /dev/null":
+		case l == "+++ /dev/null" && inHunk == false :
 			file.Mode = DELETED
-		case l == "--- /dev/null":
+		case l == "--- /dev/null" && inHunk == false :
 			file.Mode = NEW
-		case strings.HasPrefix(l, oldFilePrefix):
+		case strings.HasPrefix(l, oldFilePrefix) && inHunk == false:
 			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
-		case strings.HasPrefix(l, newFilePrefix):
+		case strings.HasPrefix(l, newFilePrefix) && inHunk == false:
 			file.NewName = strings.TrimPrefix(l, newFilePrefix)
-		case strings.HasPrefix(l, "Binary files"):
+		case strings.HasPrefix(l, "Binary files") :
 			s := strings.Fields(l)
 			file.OrigName = strings.TrimPrefix(s[2], "a/")
 			if file.OrigName == "/dev/null" {
@@ -178,7 +179,7 @@ func Parse(diffString string) (*Diff, error) {
 			// Start new hunk.
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
-		case strings.HasPrefix(l, "@@ "):
+		case strings.HasPrefix(l, "@@ ") && inHunk == false:
 			inHunk = true
 			// Start new hunk.
 			if file.Hunks == nil {
@@ -231,6 +232,15 @@ func Parse(diffString string) (*Diff, error) {
 			REMOVEDCount = hunk.OrigRange.Start
 		case inHunk && isSourceLine(l):
 			hunkLineCount++
+			if l == `\ No newline at end of file` {
+				line := DiffLine{
+				//Mode:     *m,
+				Content:  l,
+				//Position: hunkLineCount,
+			}
+				hunk.ModifyRange.Lines = append(hunk.ModifyRange.Lines, &line)
+				break
+			}
 			m, err := lineMode(l)
 			if err != nil {
 				return nil, err
@@ -249,11 +259,17 @@ func Parse(diffString string) (*Diff, error) {
 				newLine.Number = ADDEDCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
 				ADDEDCount++
+				dataDiff := newLine
+				dataDiff.Content = "+" + newLine.Content
+				hunk.ModifyRange.Lines = append(hunk.ModifyRange.Lines, &dataDiff)
 
 			case REMOVED:
 				origLine.Number = REMOVEDCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
 				REMOVEDCount++
+				dataDiff := origLine
+				dataDiff.Content = "-" + origLine.Content
+				hunk.ModifyRange.Lines = append(hunk.ModifyRange.Lines, &dataDiff)
 
 			case UNCHANGED:
 				newLine.Number = ADDEDCount
@@ -262,6 +278,9 @@ func Parse(diffString string) (*Diff, error) {
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
 				ADDEDCount++
 				REMOVEDCount++
+				dataDiff := origLine
+				dataDiff.Content = " " + origLine.Content
+				hunk.ModifyRange.Lines = append(hunk.ModifyRange.Lines, &dataDiff)
 			}
 		}
 	}
@@ -270,9 +289,9 @@ func Parse(diffString string) (*Diff, error) {
 
 func isSourceLine(line string) bool {
 	if line == `\ No newline at end of file` {
-		return false
+		return true
 	}
-	if l := len(line); l == 0 || (l >= 3 && (line[:3] == "---" || line[:3] == "+++")) {
+	if l := len(line); l == 0 {
 		return false
 	}
 	return true
