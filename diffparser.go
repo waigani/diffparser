@@ -58,6 +58,9 @@ type DiffFile struct {
 	Mode     FileMode
 	OrigName string
 	NewName  string
+	OldMode  string
+	NewMode  string
+	Binary   bool
 	Hunks    []*diffHunk
 }
 
@@ -136,9 +139,22 @@ func Parse(diffString string) (*Diff, error) {
 			inHunk = false
 			// Start a new file.
 			file = &DiffFile{}
+			str := strings.Fields(l)
+			s := str[len(str)-2]
+			file.OrigName = strings.TrimPrefix(s, "a/")
+			s = str[len(str)-1]
+			file.NewName = strings.TrimPrefix(s, "b/")
 			diff.Files = append(diff.Files, file)
 			// File mode.
 			file.Mode = MODIFIED
+		case strings.HasPrefix(l, "old mode ") :
+			file.OldMode = strings.TrimPrefix(l, "old mode ")
+		case strings.HasPrefix(l, "new mode ") :
+			file.NewMode = strings.TrimPrefix(l, "new mode ")
+		case strings.HasPrefix(l, "new file mode ") :
+			file.NewMode = strings.TrimPrefix(l, "new file mode ")
+		case strings.HasPrefix(l, "deleted file mode") :
+			file.OldMode = strings.TrimPrefix(l, "deleted file mode ")
 		case l == "+++ /dev/null" && inHunk == false :
 			file.Mode = DELETED
 		case l == "--- /dev/null" && inHunk == false :
@@ -149,6 +165,7 @@ func Parse(diffString string) (*Diff, error) {
 			file.NewName = strings.TrimPrefix(l, newFilePrefix)
 		case strings.HasPrefix(l, "Binary files") :
 			s := strings.Fields(l)
+			file.Binary = true
 			file.OrigName = strings.TrimPrefix(s[2], "a/")
 			if file.OrigName == "/dev/null" {
 				file.Mode = NEW
