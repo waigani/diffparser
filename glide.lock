@@ -1,0 +1,30 @@
+hash: be1bfcaca42c74cd5739811b2ef20c45d07ac8ecafd9f0969376094ffd9f3118
+updated: 2016-10-01T10:26:38.121839119+13:00
+imports:
+- name: github.com/juju/errors
+  version: 1b5e39b83d1835fa480e0c2ddefb040ee82d58b3
+testImports:
+- name: github.com/juju/loggo
+  version: 0e0537f18a29c2f0a814dad75b1ccc577852538a
+- name: github.com/juju/testing
+  version: 321edad6b2d1ccac4af9ee05c25b8ad734d40546
+  subpackages:
+  - checkers
+- name: github.com/juju/utils
+  version: bdb77b07e7e3f77463d10d2b554cd1b7a78009a2
+  subpackages:
+  - clock
+- name: golang.org/x/crypto
+  version: 351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93
+  subpackages:
+  - pbkdf2
+- name: gopkg.in/check.v1
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+- name: gopkg.in/mgo.v2
+  version: 01ee097136da162d1dd3c9b44fbdf3abf4fd6552
+  subpackages:
+  - bson
+  - internal/sasl
+  - internal/scram
+- name: gopkg.in/yaml.v2
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e

@@ -1,0 +1,8 @@
+package: github.com/waigani/diffparser
+import:
+- package: github.com/juju/errors
+testImport:
+- package: github.com/juju/testing
+  subpackages:
+  - checkers
+- package: gopkg.in/check.v1
