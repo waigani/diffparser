@@ -162,28 +162,45 @@ func Parse(diffString string) (*Diff, error) {
 			file.Hunks = append(file.Hunks, hunk)
 
 			// Parse hunk heading for ranges
-			re := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+),?(\d+)? @@`)
+			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@`)
+			re_all := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+),(\d+) @@`)
+			re_end := regexp.MustCompile(`@@ \-(\d+) \+(\d+),(\d+) @@`)
+			re_begin := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+) @@`)
 			m := re.FindStringSubmatch(l)
+			match_all := re_all.MatchString(l)
+			match_end := re_end.MatchString(l)
+			match_begin := re_begin.MatchString(l)
 			a, err := strconv.Atoi(m[1])
 			if err != nil {
 				return nil, err
 			}
-			b, err := strconv.Atoi(m[2])
-			if err != nil {
-				return nil, err
-			}
-			c, err := strconv.Atoi(m[3])
-			if err != nil {
-				return nil, errors.Trace(err)
-			}
+			b := a
+			c := b
 			d := c
+			if len(m[2]) > 0 {
+				b, err = strconv.Atoi(m[2])
+				if err != nil {
+					return nil, err
+				}
+			}
+			if len(m[3]) > 0 {
+				c, err = strconv.Atoi(m[3])
+				if err != nil {
+					return nil, errors.Trace(err)
+				}
+			}
 			if len(m[4]) > 0 {
 				d, err = strconv.Atoi(m[4])
 				if err != nil {
 					return nil, errors.Trace(err)
 				}
 			}
-
+			if !(match_all || match_begin) {
+				b = 1
+			}
+			if !(match_all || match_end) {
+				d = 1
+			}
 			// hunk orig range.
 			hunk.OrigRange = diffRange{
 				Start:  a,
