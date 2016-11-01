@@ -13,16 +13,16 @@ import (
 
 type FileMode int
 
-const ( NEW = "1"
-	MODIFIED = "2"
-	DELETED = "3"
-	MOVE_AWAY = "4"
-	COPY_AWAY = "5"
-	MOVE_HERE = "6"
-	COPY_HERE = "7"
-	MULTI_COPY = "8"
-	MESSAGE = "9"
-	CHILD = "10"
+const ( NEW = 1
+	MODIFIED = 2
+	DELETED = 3
+	MOVE_AWAY = 4
+	COPY_AWAY = 5
+	MOVE_HERE = 6
+	COPY_HERE = 7
+	MULTI_COPY = 8
+	MESSAGE = 9
+	CHILD = 10
 )
 
 type diffRange struct {
