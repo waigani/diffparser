@@ -13,18 +13,17 @@ import (
 
 type FileMode int
 
-const ( NEW = 1
-	MODIFIED = 2
-	DELETED = 3
-	MOVE_AWAY = 4
-	COPY_AWAY = 5
-	MOVE_HERE = 6
-	COPY_HERE = 7
-	MULTI_COPY = 8
-	MESSAGE = 9
-	CHILD = 10
+const ( NEW FileMode = iota + 1
+	MODIFIED
+	DELETED
+	MOVE_AWAY
+	COPY_AWAY
+	MOVE_HERE
+	COPY_HERE
+	MULTI_COPY
+	MESSAGE
+	CHILD
 )
-
 type diffRange struct {
 
 	// starting line number
