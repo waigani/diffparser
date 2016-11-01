@@ -13,7 +13,8 @@ import (
 
 type FileMode int
 
-const ( NEW FileMode = iota + 1
+const (
+	NEW FileMode = iota + 1
 	MODIFIED
 	DELETED
 	MOVE_AWAY
