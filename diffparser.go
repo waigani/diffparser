@@ -150,7 +150,9 @@ func Parse(diffString string) (*Diff, error) {
 			file.NewName = strings.TrimPrefix(s, "b/")
 			diff.Files = append(diff.Files, file)
 			// File mode.
-			file.Mode = MODIFIED
+			if file.Mode == 0 {
+				file.Mode = MODIFIED
+			}
 		case strings.HasPrefix(l, "old mode ") :
 			file.OldMode = strings.TrimPrefix(l, "old mode ")
 		case strings.HasPrefix(l, "new mode ") :
@@ -180,6 +182,16 @@ func Parse(diffString string) (*Diff, error) {
 				file.NewName = ""
 				file.Mode = DELETED
 			}
+		case strings.HasPrefix(l, "copy to") :
+			file.Mode = COPY_HERE
+			oldFile := diff.searchOldFile(file.OrigName)
+			if oldFile != nil {
+				if oldFile.Mode == MOVE_AWAY {
+					oldFile.Mode = MULTI_COPY
+				}else {
+					oldFile.Mode = COPY_AWAY
+				}
+			}
 		case strings.HasPrefix(l, "rename from"):
 			s := strings.Fields(l)
 			file.NewName = s[len(s)-1]
@@ -194,14 +206,22 @@ func Parse(diffString string) (*Diff, error) {
 			// Start a new file.
 			file = &DiffFile{}
 			file.Mode = MOVE_HERE
+			oldFile := diff.searchOldFile(file.OrigName)
+			if oldFile != nil {
+				if oldFile.Mode == MULTI_COPY {
+					// no change
+				} else if oldFile.Mode == MOVE_AWAY {
+					oldFile.Mode = MULTI_COPY
+				} else if oldFile.Mode == COPY_AWAY {
+					oldFile.Mode = MULTI_COPY
+				}
+			}
 			diff.Files = append(diff.Files, file)
 			file.NewName = s[len(s)-1]
 			file.OrigName = name
 			// Start new hunk.
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
-		case strings.HasPrefix(l, "copy from"):
-
 		case strings.HasPrefix(l, "@@ ") && inHunk == false:
 			inHunk = true
 			// Start new hunk.
@@ -318,4 +338,14 @@ func isSourceLine(line string) bool {
 		return false
 	}
 	return true
+}
+
+func (d Diff)searchOldFile(fileName string) *DiffFile {
+
+	for _, file := range d.Files {
+		if file.NewName == fileName {
+			return file
+		}
+	}
+	return nil
 }
