@@ -200,6 +200,8 @@ func Parse(diffString string) (*Diff, error) {
 			// Start new hunk.
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
+		case strings.HasPrefix(l, "copy from"):
+
 		case strings.HasPrefix(l, "@@ ") && inHunk == false:
 			inHunk = true
 			// Start new hunk.
