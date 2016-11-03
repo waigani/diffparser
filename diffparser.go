@@ -67,6 +67,7 @@ type DiffFile struct {
 	NewMode  string
 	Binary   bool
 	Hunks    []*diffHunk
+	Away     []string
 }
 
 type Diff struct {
@@ -183,6 +184,13 @@ func Parse(diffString string) (*Diff, error) {
 				file.NewName = ""
 				file.Mode = DELETED
 			}
+/*		case strings.HasPrefix(l, "copy from"):
+			s := strings.Fields(l)
+			file.NewName = s[len(s)-1] //File name but the file does not exist
+			file.OrigName = ""
+			file.Mode = COPY_AWAY
+			hunk = &diffHunk{}
+			file.Hunks = append(file.Hunks, hunk)*/
 		case strings.HasPrefix(l, "copy to"):
 			file.Mode = COPY_HERE
 			oldFile := diff.searchFile(file.OrigName)
@@ -192,24 +200,38 @@ func Parse(diffString string) (*Diff, error) {
 				} else {
 					oldFile.Mode = COPY_AWAY
 				}
+				s := strings.Fields(l)
+				oldFile.Away = append(oldFile.Away, s[len(s)-1])
+			}else {
+				oldFile = &DiffFile{}
+				oldFile.NewName = file.OrigName
+				oldFile.Mode = COPY_AWAY
+				oldFile.Away = append(oldFile.Away, file.NewName)
+				hunk = &diffHunk{}
+				oldFile.Hunks = append(oldFile.Hunks, hunk)
+				diff.Files = append(diff.Files, oldFile)
 			}
-		case strings.HasPrefix(l, "rename from"):
+
+			hunk = &diffHunk{}
+			file.Hunks = append(file.Hunks, hunk)
+/*		case strings.HasPrefix(l, "rename from"):
 			s := strings.Fields(l)
 			file.NewName = s[len(s)-1]
 			file.OrigName = ""
 			file.Mode = MOVE_AWAY
 			hunk = &diffHunk{}
-			file.Hunks = append(file.Hunks, hunk)
+			file.Hunks = append(file.Hunks, hunk)*/
 		case strings.HasPrefix(l, "rename to"):
-			s := strings.Fields(l)
-			name := file.NewName
-			file.OrigName = s[len(s)-1]
+			//s := strings.Fields(l)
+			//name := file.NewName
+			//file.OrigName = s[len(s)-1]
+			//file.Away = append(file.Away, file.OrigName)
 			// Start a new file.
-			file = &DiffFile{}
+			//file = &DiffFile{}
 			file.Mode = MOVE_HERE
-			diff.Files = append(diff.Files, file)
-			file.NewName = s[len(s)-1]
-			file.OrigName = name
+			//diff.Files = append(diff.Files, file)
+			//file.NewName = s[len(s)-1]
+			//file.OrigName = name
 			// Start new hunk.
 			oldFile := diff.searchFile(file.OrigName)
 			if oldFile != nil {
@@ -221,7 +243,15 @@ func Parse(diffString string) (*Diff, error) {
 					oldFile.Mode = MULTI_COPY
 				}
 
-				fmt.Println(oldFile)
+				oldFile.Away = append(oldFile.Away, file.NewName)
+			}else {
+				oldFile = &DiffFile{}
+				oldFile.NewName = file.OrigName
+				oldFile.Mode = MOVE_AWAY
+				oldFile.Away = append(oldFile.Away, file.NewName)
+				hunk = &diffHunk{}
+				oldFile.Hunks = append(oldFile.Hunks, hunk)
+				diff.Files = append(diff.Files, oldFile)
 			}
 			hunk = &diffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
