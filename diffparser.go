@@ -4,6 +4,7 @@
 package diffparser
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -164,6 +165,9 @@ func Parse(diffString string) (*Diff, error) {
 			// Parse hunk heading for ranges
 			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@`)
 			m := re.FindStringSubmatch(l)
+			if len(m) < 5 {
+				return nil, errors.Trace(fmt.Errorf("Error parsing line: %s", l))
+			}
 			a, err := strconv.Atoi(m[1])
 			if err != nil {
 				return nil, err
