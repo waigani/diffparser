@@ -37,7 +37,7 @@ func (s *suite) SetUpSuite(c *gc.C) {
 func (s *suite) TestFileModeAndNaming(c *gc.C) {
 	diff, err := diffparser.Parse(s.rawdiff)
 	c.Assert(err, jc.ErrorIsNil)
-	c.Assert(diff.Files, gc.HasLen, 5)
+	c.Assert(diff.Files, gc.HasLen, 6)
 
 	for i, expected := range []struct {
 		mode     diffparser.FileMode
@@ -69,6 +69,11 @@ func (s *suite) TestFileModeAndNaming(c *gc.C) {
 			origName: "",
 			newName:  "newname",
 		},
+		{
+			mode:     diffparser.DELETED,
+			origName: "symlink",
+			newName:  "",
+		},
 	} {
 		file := diff.Files[i]
 		c.Logf("testing file: %v", file)
@@ -81,7 +86,7 @@ func (s *suite) TestFileModeAndNaming(c *gc.C) {
 func (s *suite) TestHunk(c *gc.C) {
 	diff, err := diffparser.Parse(s.rawdiff)
 	c.Assert(err, jc.ErrorIsNil)
-	c.Assert(diff.Files, gc.HasLen, 5)
+	c.Assert(diff.Files, gc.HasLen, 6)
 
 	expectedOrigLines := []diffparser.DiffLine{
 		{

@@ -47,3 +47,11 @@ index 0000000..c0dafd8
 +lines
 +in
 +file2
+diff --git a/symlink b/symlink
+deleted file mode 120000
+index 03b9162..0000000
+--- a/symlink
++++ /dev/null
+@@ -1 +0,0 @@
+-symlink-destination
+\ No newline at end of file

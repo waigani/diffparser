@@ -162,15 +162,18 @@ func Parse(diffString string) (*Diff, error) {
 			file.Hunks = append(file.Hunks, hunk)
 
 			// Parse hunk heading for ranges
-			re := regexp.MustCompile(`@@ \-(\d+),(\d+) \+(\d+),?(\d+)? @@`)
+			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@`)
 			m := re.FindStringSubmatch(l)
 			a, err := strconv.Atoi(m[1])
 			if err != nil {
 				return nil, err
 			}
-			b, err := strconv.Atoi(m[2])
-			if err != nil {
-				return nil, err
+			b := a
+			if len(m[2]) > 0 {
+				b, err = strconv.Atoi(m[2])
+				if err != nil {
+					return nil, err
+				}
 			}
 			c, err := strconv.Atoi(m[3])
 			if err != nil {
