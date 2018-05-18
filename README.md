@@ -7,7 +7,7 @@ Install
 -------
 
 ```sh
-go get http://github.com/waigani/diffparser
+go get github.com/waigani/diffparser
 ```
 
 Usage Example
