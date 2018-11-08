@@ -1,5 +1,6 @@
 DiffParser
 ===========
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/waigani/diffparser)
 
 DiffParser is a Golang package which parse's a git diff.
 
