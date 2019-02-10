@@ -4,12 +4,11 @@
 package diffparser
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/juju/errors"
+	"errors"
 )
 
 type FileMode int
@@ -32,7 +31,7 @@ type diffRange struct {
 	Lines []*DiffLine
 }
 
-type DiffLineMode int
+type DiffLineMode rune
 
 const (
 	ADDED DiffLineMode = iota
@@ -47,16 +46,19 @@ type DiffLine struct {
 	Position int // the line in the diff
 }
 
-type diffHunk struct {
-	OrigRange diffRange
-	NewRange  diffRange
+type DiffHunk struct {
+	HunkHeader string
+	OrigRange  diffRange
+	NewRange   diffRange
+	WholeRange diffRange
 }
 
 type DiffFile struct {
-	Mode     FileMode
-	OrigName string
-	NewName  string
-	Hunks    []*diffHunk
+	DiffHeader string
+	Mode       FileMode
+	OrigName   string
+	NewName    string
+	Hunks      []*DiffHunk
 }
 
 type Diff struct {
@@ -107,7 +109,7 @@ func lineMode(line string) (*DiffLineMode, error) {
 	case "-":
 		m = REMOVED
 	default:
-		return nil, errors.Errorf("could not parse line mode for line: %q", line)
+		return nil, errors.New("could not parse line mode for line: \"" + line + "\"")
 	}
 	return &m, nil
 }
@@ -120,7 +122,7 @@ func Parse(diffString string) (*Diff, error) {
 	lines := strings.Split(diffString, "\n")
 
 	var file *DiffFile
-	var hunk *diffHunk
+	var hunk *DiffHunk
 	var ADDEDCount int
 	var REMOVEDCount int
 	var inHunk bool
@@ -130,7 +132,7 @@ func Parse(diffString string) (*Diff, error) {
 	var diffPosCount int
 	var firstHunkInFile bool
 	// Parse each line of diff.
-	for _, l := range lines {
+	for idx, l := range lines {
 		diffPosCount++
 		switch {
 		case strings.HasPrefix(l, "diff "):
@@ -138,6 +140,21 @@ func Parse(diffString string) (*Diff, error) {
 
 			// Start a new file.
 			file = &DiffFile{}
+			header := l
+			if len(lines) > idx+3 {
+				rein := regexp.MustCompile(`^index .+$`)
+				remp := regexp.MustCompile(`^(-|\+){3} .+$`)
+				index := lines[idx+1]
+				if rein.MatchString(index) {
+					header = header + "\n" + index
+				}
+				mp1 := lines[idx+2]
+				mp2 := lines[idx+3]
+				if remp.MatchString(mp1) && remp.MatchString(mp2) {
+					header = header + "\n" + mp1 + "\n" + mp2
+				}
+			}
+			file.DiffHeader = header
 			diff.Files = append(diff.Files, file)
 			firstHunkInFile = true
 
@@ -159,14 +176,14 @@ func Parse(diffString string) (*Diff, error) {
 
 			inHunk = true
 			// Start new hunk.
-			hunk = &diffHunk{}
+			hunk = &DiffHunk{}
 			file.Hunks = append(file.Hunks, hunk)
 
 			// Parse hunk heading for ranges
-			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@`)
+			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@ ?(.+)?`)
 			m := re.FindStringSubmatch(l)
 			if len(m) < 5 {
-				return nil, errors.Trace(fmt.Errorf("Error parsing line: %s", l))
+				return nil, errors.New("Error parsing line: " + l)
 			}
 			a, err := strconv.Atoi(m[1])
 			if err != nil {
@@ -181,14 +198,17 @@ func Parse(diffString string) (*Diff, error) {
 			}
 			c, err := strconv.Atoi(m[3])
 			if err != nil {
-				return nil, errors.Trace(err)
+				return nil, err
 			}
 			d := c
 			if len(m[4]) > 0 {
 				d, err = strconv.Atoi(m[4])
 				if err != nil {
-					return nil, errors.Trace(err)
+					return nil, err
 				}
+			}
+			if len(m[5]) > 0 {
+				hunk.HunkHeader = m[5]
 			}
 
 			// hunk orig range.
@@ -209,7 +229,7 @@ func Parse(diffString string) (*Diff, error) {
 		case inHunk && isSourceLine(l):
 			m, err := lineMode(l)
 			if err != nil {
-				return nil, errors.Trace(err)
+				return nil, err
 			}
 			line := DiffLine{
 				Mode:     *m,
@@ -224,16 +244,19 @@ func Parse(diffString string) (*Diff, error) {
 			case ADDED:
 				newLine.Number = ADDEDCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
+				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &newLine)
 				ADDEDCount++
 
 			case REMOVED:
 				origLine.Number = REMOVEDCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
+				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &origLine)
 				REMOVEDCount++
 
 			case UNCHANGED:
 				newLine.Number = ADDEDCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
+				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &newLine)
 				origLine.Number = REMOVEDCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
 				ADDEDCount++
@@ -253,4 +276,8 @@ func isSourceLine(line string) bool {
 		return false
 	}
 	return true
+}
+
+func (hunk *DiffHunk) Length() int {
+	return len(hunk.WholeRange.Lines) + 1
 }
