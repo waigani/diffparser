@@ -11,11 +11,15 @@ import (
 	"errors"
 )
 
+// FileMode represents the file status in a diff
 type FileMode int
 
 const (
+	// DELETED if the file is deleted
 	DELETED FileMode = iota
+	// MODIFIED if the file is modified
 	MODIFIED
+	// NEW if the file is created and there is no diff
 	NEW
 )
 
@@ -31,14 +35,19 @@ type diffRange struct {
 	Lines []*DiffLine
 }
 
+// DiffLineMode tells the line if added, removed or unchanged
 type DiffLineMode rune
 
 const (
+	// ADDED if the line is added (shown green in diff)
 	ADDED DiffLineMode = iota
+	// REMOVED if the line is deleted (shown red in diff)
 	REMOVED
+	// UNCHANGED if the line is unchanged (not colored in diff)
 	UNCHANGED
 )
 
+// DiffLine is the least part of an actual diff
 type DiffLine struct {
 	Mode     DiffLineMode
 	Number   int
@@ -46,6 +55,7 @@ type DiffLine struct {
 	Position int // the line in the diff
 }
 
+// DiffHunk is a group of difflines
 type DiffHunk struct {
 	HunkHeader string
 	OrigRange  diffRange
@@ -53,6 +63,7 @@ type DiffHunk struct {
 	WholeRange diffRange
 }
 
+// DiffFile is the sum of diffhunks and holds the changes of the file features
 type DiffFile struct {
 	DiffHeader string
 	Mode       FileMode
@@ -61,6 +72,7 @@ type DiffFile struct {
 	Hunks      []*DiffHunk
 }
 
+//Diff is the collection of DiffFiles
 type Diff struct {
 	Files []*DiffFile
 	Raw   string `sql:"type:text"`
@@ -278,6 +290,7 @@ func isSourceLine(line string) bool {
 	return true
 }
 
+// Length returns the hunks line length
 func (hunk *DiffHunk) Length() int {
 	return len(hunk.WholeRange.Lines) + 1
 }
