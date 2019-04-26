@@ -1,0 +1,16 @@
+github.com/juju/errors v0.0.0-20150916125642-1b5e39b83d18 h1:Sem5Flzxj8ZdAgY2wfHBUlOYyP4wrpIfM8IZgANNGh8=
+github.com/juju/errors v0.0.0-20150916125642-1b5e39b83d18/go.mod h1:W54LbzXuIE0boCoNJfwqpmkKJ1O4TCTZMetAt6jGk7Q=
+github.com/juju/loggo v0.0.0-20160511211902-0e0537f18a29 h1:wXuXWz7gZy8UQSiFy34IhHOdeV45qSO4fAG3p0DrRRA=
+github.com/juju/loggo v0.0.0-20160511211902-0e0537f18a29/go.mod h1:vgyd7OREkbtVEN/8IXZe5Ooef3LQePvuBm9UWj6ZL8U=
+github.com/juju/testing v0.0.0-20160203233110-321edad6b2d1 h1:0WbpCsj5kC5p6YSWl0Y6THSMeD2eTCx2rLKYQ7/3aS4=
+github.com/juju/testing v0.0.0-20160203233110-321edad6b2d1/go.mod h1:63prj8cnj0tU0S9OHjGJn+b1h0ZghCndfnbQolrYTwA=
+github.com/juju/utils v0.0.0-20160815113839-bdb77b07e7e3 h1:UmZwEQJiCr97I7qMfUB9VqS2BzRNQXx4VuAoHIfTQyA=
+github.com/juju/utils v0.0.0-20160815113839-bdb77b07e7e3/go.mod h1:6/KLg8Wz/y2KVGWEpkK9vMNGkOnu4k/cqs8Z1fKjTOk=
+golang.org/x/crypto v0.0.0-20160824173033-351dc6a5bf92 h1:6HmDSTSU7PVgeKBom4W04S2VmgzLOtZlfUiJuF+txm4=
+golang.org/x/crypto v0.0.0-20160824173033-351dc6a5bf92/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+gopkg.in/check.v1 v1.0.0-20160105164936-4f90aeace3a2 h1:+j1SppRob9bAgoYmsdW9NNBdKZfgYuWpqnYHv78Qt8w=
+gopkg.in/check.v1 v1.0.0-20160105164936-4f90aeace3a2/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/mgo.v2 v2.0.0-20150529124711-01ee097136da h1:k2jXxOPVI4OLmisXza2wym08Pz6x+ky/f71oJBuA8zg=
+gopkg.in/mgo.v2 v2.0.0-20150529124711-01ee097136da/go.mod h1:yeKp02qBN3iKW1OzL3MGk2IdtZzaj7SFntXj72NppTA=
+gopkg.in/yaml.v2 v2.0.0-20160715033755-e4d366fc3c79 h1:mENkfeXGmLV7lIyBeNdwYWdONek7pH9yHaHMgZyvIWE=
+gopkg.in/yaml.v2 v2.0.0-20160715033755-e4d366fc3c79/go.mod h1:JAlM8MvJe8wmxCU4Bli9HhUf9+ttbYbLASfIpnQbh74=
