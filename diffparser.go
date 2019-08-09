@@ -23,7 +23,7 @@ const (
 	NEW
 )
 
-type diffRange struct {
+type DiffRange struct {
 
 	// starting line number
 	Start int
@@ -58,9 +58,9 @@ type DiffLine struct {
 // DiffHunk is a group of difflines
 type DiffHunk struct {
 	HunkHeader string
-	OrigRange  diffRange
-	NewRange   diffRange
-	WholeRange diffRange
+	OrigRange  DiffRange
+	NewRange   DiffRange
+	WholeRange DiffRange
 }
 
 // DiffFile is the sum of diffhunks and holds the changes of the file features
@@ -224,13 +224,13 @@ func Parse(diffString string) (*Diff, error) {
 			}
 
 			// hunk orig range.
-			hunk.OrigRange = diffRange{
+			hunk.OrigRange = DiffRange{
 				Start:  a,
 				Length: b,
 			}
 
 			// hunk new range.
-			hunk.NewRange = diffRange{
+			hunk.NewRange = DiffRange{
 				Start:  c,
 				Length: d,
 			}
