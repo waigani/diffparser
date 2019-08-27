@@ -1,135 +1,118 @@
 // Copyright (c) 2015 Jesse Meek <https://github.com/waigani>
 // This program is Free Software see LICENSE file for details.
 
-package diffparser_test
+package diffparser
 
 import (
 	"io/ioutil"
 	"testing"
 
-	jt "github.com/juju/testing"
-	jc "github.com/juju/testing/checkers"
-	"github.com/waigani/diffparser"
-	gc "gopkg.in/check.v1"
+	"github.com/stretchr/testify/require"
 )
-
-func Test(t *testing.T) {
-	gc.TestingT(t)
-}
-
-type suite struct {
-	jt.CleanupSuite
-	rawdiff string
-	diff    *diffparser.Diff
-}
-
-var _ = gc.Suite(&suite{})
-
-func (s *suite) SetUpSuite(c *gc.C) {
-	byt, err := ioutil.ReadFile("example.diff")
-	c.Assert(err, jc.ErrorIsNil)
-	s.rawdiff = string(byt)
-}
 
 // TODO(waigani) tests are missing more creative names (spaces, special
 // chars), and diffed files that are not in the current directory.
 
-func (s *suite) TestFileModeAndNaming(c *gc.C) {
-	diff, err := diffparser.Parse(s.rawdiff)
-	c.Assert(err, jc.ErrorIsNil)
-	c.Assert(diff.Files, gc.HasLen, 6)
+func setup(t *testing.T) *Diff {
+	byt, err := ioutil.ReadFile("example.diff")
+	require.NoError(t, err)
 
+	diff, err := Parse(string(byt))
+	require.NoError(t, err)
+	require.Equal(t, len(diff.Files), 6)
+
+	return diff
+}
+func TestFileModeAndNaming(t *testing.T) {
+	diff := setup(t)
 	for i, expected := range []struct {
-		mode     diffparser.FileMode
+		mode     FileMode
 		origName string
 		newName  string
 	}{
 		{
-			mode:     diffparser.MODIFIED,
+			mode:     MODIFIED,
 			origName: "file1",
 			newName:  "file1",
 		},
 		{
-			mode:     diffparser.DELETED,
+			mode:     DELETED,
 			origName: "file2",
 			newName:  "",
 		},
 		{
-			mode:     diffparser.DELETED,
+			mode:     DELETED,
 			origName: "file3",
 			newName:  "",
 		},
 		{
-			mode:     diffparser.NEW,
+			mode:     NEW,
 			origName: "",
 			newName:  "file4",
 		},
 		{
-			mode:     diffparser.NEW,
+			mode:     NEW,
 			origName: "",
 			newName:  "newname",
 		},
 		{
-			mode:     diffparser.DELETED,
+			mode:     DELETED,
 			origName: "symlink",
 			newName:  "",
 		},
 	} {
 		file := diff.Files[i]
-		c.Logf("testing file: %v", file)
-		c.Assert(file.Mode, gc.Equals, expected.mode)
-		c.Assert(file.OrigName, gc.Equals, expected.origName)
-		c.Assert(file.NewName, gc.Equals, expected.newName)
+		t.Logf("testing file: %v", file)
+		require.Equal(t, expected.mode, file.Mode)
+		require.Equal(t, expected.origName, file.OrigName)
+		require.Equal(t, expected.newName, file.NewName)
 	}
 }
 
-func (s *suite) TestHunk(c *gc.C) {
-	diff, err := diffparser.Parse(s.rawdiff)
-	c.Assert(err, jc.ErrorIsNil)
-	c.Assert(diff.Files, gc.HasLen, 6)
-
-	expectedOrigLines := []diffparser.DiffLine{
+func TestHunk(t *testing.T) {
+	diff := setup(t)
+	expectedOrigLines := []DiffLine{
 		{
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   1,
 			Content:  "some",
 			Position: 2,
 		}, {
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   2,
 			Content:  "lines",
 			Position: 3,
 		}, {
-			Mode:     diffparser.REMOVED,
+			Mode:     REMOVED,
 			Number:   3,
 			Content:  "in",
 			Position: 4,
 		}, {
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   4,
 			Content:  "file1",
 			Position: 5,
 		},
 	}
 
-	expectedNewLines := []diffparser.DiffLine{
+	expectedNewLines := []DiffLine{
 		{
-			Mode:     diffparser.ADDED,
+			Mode:     ADDED,
 			Number:   1,
 			Content:  "add a line",
 			Position: 1,
 		}, {
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   2,
 			Content:  "some",
 			Position: 2,
 		}, {
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   3,
 			Content:  "lines",
 			Position: 3,
 		}, {
-			Mode:     diffparser.UNCHANGED,
+			Mode:     UNCHANGED,
 			Number:   4,
 			Content:  "file1",
 			Position: 5,
@@ -140,15 +123,15 @@ func (s *suite) TestHunk(c *gc.C) {
 	origRange := file.Hunks[0].OrigRange
 	newRange := file.Hunks[0].NewRange
 
-	c.Assert(origRange.Start, gc.Equals, 1)
-	c.Assert(origRange.Length, gc.Equals, 4)
-	c.Assert(newRange.Start, gc.Equals, 1)
-	c.Assert(newRange.Length, gc.Equals, 4)
+	require.Equal(t, 1, origRange.Start)
+	require.Equal(t, 4, origRange.Length)
+	require.Equal(t, 1, newRange.Start)
+	require.Equal(t, 4, newRange.Length)
 
 	for i, line := range expectedOrigLines {
-		c.Assert(*origRange.Lines[i], gc.DeepEquals, line)
+		require.Equal(t, line, *origRange.Lines[i])
 	}
 	for i, line := range expectedNewLines {
-		c.Assert(*newRange.Lines[i], gc.DeepEquals, line)
+		require.Equal(t, line, *newRange.Lines[i])
 	}
 }

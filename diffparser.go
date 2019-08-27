@@ -23,6 +23,7 @@ const (
 	NEW
 )
 
+// DiffRange contains the DiffLine's
 type DiffRange struct {
 
 	// starting line number
@@ -72,7 +73,7 @@ type DiffFile struct {
 	Hunks      []*DiffHunk
 }
 
-//Diff is the collection of DiffFiles
+// Diff is the collection of DiffFiles
 type Diff struct {
 	Files []*DiffFile
 	Raw   string `sql:"type:text"`

@@ -2,39 +2,22 @@
 
 
 [[projects]]
-  name = "github.com/juju/errors"
-  packages = ["."]
-  revision = "1b5e39b83d1835fa480e0c2ddefb040ee82d58b3"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
-  name = "github.com/juju/loggo"
-  packages = ["."]
-  revision = "0e0537f18a29c2f0a814dad75b1ccc577852538a"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/juju/testing"
-  packages = [".","checkers"]
-  revision = "321edad6b2d1ccac4af9ee05c25b8ad734d40546"
-
-[[projects]]
-  name = "github.com/juju/utils"
-  packages = [".","clock"]
-  revision = "bdb77b07e7e3f77463d10d2b554cd1b7a78009a2"
-
-[[projects]]
-  name = "golang.org/x/crypto"
-  packages = ["pbkdf2"]
-  revision = "351dc6a5bf92a5f2ae22fadeee08eb6a45aa2d93"
-
-[[projects]]
-  name = "gopkg.in/check.v1"
-  packages = ["."]
-  revision = "4f90aeace3a26ad7021961c297b22c42160c7b25"
-
-[[projects]]
-  name = "gopkg.in/mgo.v2"
-  packages = [".","bson","internal/sasl","internal/scram"]
-  revision = "01ee097136da162d1dd3c9b44fbdf3abf4fd6552"
+  name = "github.com/stretchr/testify"
+  packages = ["assert","require"]
+  revision = "221dbe5ed46703ee255b1da0dec05086f5035f62"
+  version = "v1.4.0"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -44,6 +27,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "029189b0eedf6c5b686fae586bc1ad03386ed2d6b4712b6a866115c95ce0cb42"
+  inputs-digest = "4e74844cc0163f383b0d0bb6c97ad78dc4df008646534aa3a288fd8af1831c7e"
   solver-name = "gps-cdcl"
   solver-version = 1
