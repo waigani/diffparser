@@ -121,6 +121,7 @@ func lineMode(line string) (*DiffLineMode, error) {
 		m = ADDED
 	case "-":
 		m = REMOVED
+	// mock fix
 	default:
 		return nil, errors.New("could not parse line mode for line: \"" + line + "\"")
 	}
