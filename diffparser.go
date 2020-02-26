@@ -23,7 +23,7 @@ const (
 	NEW
 )
 
-// DiffRange contains the DiffLine's
+// DiffRange contains the DiffLine's range
 type DiffRange struct {
 
 	// starting line number
