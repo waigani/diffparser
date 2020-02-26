@@ -107,6 +107,7 @@ func (d *Diff) Changed() map[string][]int {
 	return dFiles
 }
 
+// regFind
 func regFind(s string, reg string, group int) string {
 	re := regexp.MustCompile(reg)
 	return re.FindStringSubmatch(s)[group]
