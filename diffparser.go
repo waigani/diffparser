@@ -39,6 +39,7 @@ type DiffRange struct {
 }
 
 func retry(ctx context.Context, f func() error) (int, error) {
+
 	attempt := 0
 	for delay := time.Millisecond; ; delay *= 2 {
 		attempt++
