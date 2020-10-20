@@ -4,9 +4,11 @@
 package diffparser
 
 import (
+	"context"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"errors"
 )
@@ -34,6 +36,24 @@ type DiffRange struct {
 
 	// Each line of the hunk range.
 	Lines []*DiffLine
+}
+
+func retry(ctx context.Context, f func() error) (int, error) {
+	attempt := 0
+	for delay := time.Millisecond; ; delay *= 2 {
+		attempt++
+		if err := f(); err == nil {
+			return attempt, nil
+		}
+		if delay >= 10*time.Second {
+			delay = 10 * time.Second
+		}
+		select {
+		case <-time.After(delay):
+		case <-ctx.Done():
+			return attempt, ctx.Err()
+		}
+	}
 }
 
 // DiffLineMode tells the line if added, removed or unchanged
