@@ -134,6 +134,13 @@ func Parse(diffString string) (*Diff, error) {
 	diff.Raw = diffString
 	lines := strings.Split(diffString, "\n")
 
+	if !strings.HasPrefix(diffString, "diff ") {
+		return nil, errors.New("Invalid diffString prefix")
+	}
+	if len(lines) < 3 {
+		return nil, errors.New("Invalid diffString. Lines count is too short")
+	}
+
 	var file *DiffFile
 	var hunk *DiffHunk
 	var ADDEDCount int
@@ -275,6 +282,8 @@ func Parse(diffString string) (*Diff, error) {
 				ADDEDCount++
 				REMOVEDCount++
 			}
+		default:
+			continue
 		}
 	}
 
