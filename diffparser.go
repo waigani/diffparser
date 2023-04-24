@@ -115,7 +115,7 @@ func (d *Diff) Changed() map[string][]int {
 	dFiles := make(map[string][]int)
 
 	for _, f := range d.Files {
-		if f.Mode == DELETED {
+		if f.Mode == FileModeDeleted {
 			continue
 		}
 

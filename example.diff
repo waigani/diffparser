@@ -66,3 +66,14 @@ index 2c95e05..7287b8f 100644
 +
  file5
 \ No newline at end of file
+diff --git a/file6 b/file6
+index 508e616..d3bd7a2 100644
+--- a/file6
++++ b/file6
+@@ -1,4 +1,4 @@
+ @@some
+-lines
++@@lines
+ in
+ file6
+\ No newline at end of file
