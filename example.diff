@@ -55,3 +55,14 @@ index 03b9162..0000000
 @@ -1 +0,0 @@
 -symlink-destination
 \ No newline at end of file
+diff --git "a/file5-\344\270\255\346\226\207" "b/file5-\344\270\255\346\226\207"
+index 2c95e05..7287b8f 100644
+--- "a/file5-\344\270\255\346\226\207"
++++ "b/file5-\344\270\255\346\226\207"
+@@ -1,3 +1,4 @@
+ some lines
+-in
++
++
+ file5
+\ No newline at end of file

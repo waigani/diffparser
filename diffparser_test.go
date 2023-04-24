@@ -19,7 +19,7 @@ func setup(t *testing.T) *Diff {
 
 	diff, err := Parse(string(byt))
 	require.NoError(t, err)
-	require.Equal(t, len(diff.Files), 6)
+	require.Equal(t, len(diff.Files), 7)
 
 	return diff
 }
@@ -60,6 +60,11 @@ func TestFileModeAndNaming(t *testing.T) {
 			mode:     FileModeDeleted,
 			origName: "symlink",
 			newName:  "",
+		},
+		{
+			mode:     FileModeModified,
+			origName: "file5-中文",
+			newName:  "file5-中文",
 		},
 	} {
 		file := diff.Files[i]
@@ -134,5 +139,26 @@ func TestHunk(t *testing.T) {
 	}
 	for i, line := range expectedNewLines {
 		require.Equal(t, line, *newRange.Lines[i])
+	}
+}
+
+func TestDecodeOctalString(t *testing.T) {
+	tests := []struct {
+		input  string
+		output string
+	}{
+		{
+			input:  `file-1.md`,
+			output: "file-1.md",
+		},
+		{
+			input:  `file-\344\270\255\346\226\207.md`,
+			output: "file-中文.md",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			require.Equal(t, tt.output, decodeOctalString(tt.input))
+		})
 	}
 }

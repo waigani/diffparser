@@ -145,8 +145,10 @@ func lineMode(line string) (DiffLineMode, error) {
 }
 
 const (
-	oldFilePrefix = "--- a/"
-	newFilePrefix = "+++ b/"
+	oldFilePrefix      = "--- a/"
+	newFilePrefix      = "+++ b/"
+	oldFileQuotePrefix = `--- "a/`
+	newFileQuotePrefix = `+++ "b/`
 )
 
 var (
@@ -206,6 +208,12 @@ func Parse(diffString string) (*Diff, error) {
 			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
 		case strings.HasPrefix(l, newFilePrefix):
 			file.NewName = strings.TrimPrefix(l, newFilePrefix)
+		case strings.HasPrefix(l, oldFileQuotePrefix):
+			file.OrigName = strings.TrimSuffix(strings.TrimPrefix(l, oldFileQuotePrefix), `"`)
+			file.OrigName = decodeOctalString(file.OrigName)
+		case strings.HasPrefix(l, newFileQuotePrefix):
+			file.NewName = strings.TrimSuffix(strings.TrimPrefix(l, newFileQuotePrefix), `"`)
+			file.NewName = decodeOctalString(file.NewName)
 		case strings.HasPrefix(l, "@@ "):
 			if firstHunkInFile {
 				diffPosCount = 0
@@ -313,4 +321,12 @@ func isSourceLine(line string) bool {
 		return false
 	}
 	return true
+}
+
+func decodeOctalString(s string) string {
+	s2, err := strconv.Unquote(`"` + s + `"`)
+	if err != nil {
+		return s
+	}
+	return s2
 }
