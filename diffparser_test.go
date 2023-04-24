@@ -23,6 +23,7 @@ func setup(t *testing.T) *Diff {
 
 	return diff
 }
+
 func TestFileModeAndNaming(t *testing.T) {
 	diff := setup(t)
 	for i, expected := range []struct {
@@ -31,32 +32,32 @@ func TestFileModeAndNaming(t *testing.T) {
 		newName  string
 	}{
 		{
-			mode:     MODIFIED,
+			mode:     FileModeModified,
 			origName: "file1",
 			newName:  "file1",
 		},
 		{
-			mode:     DELETED,
+			mode:     FileModeDeleted,
 			origName: "file2",
 			newName:  "",
 		},
 		{
-			mode:     DELETED,
+			mode:     FileModeDeleted,
 			origName: "file3",
 			newName:  "",
 		},
 		{
-			mode:     NEW,
+			mode:     FileModeNew,
 			origName: "",
 			newName:  "file4",
 		},
 		{
-			mode:     NEW,
+			mode:     FileModeNew,
 			origName: "",
 			newName:  "newname",
 		},
 		{
-			mode:     DELETED,
+			mode:     FileModeDeleted,
 			origName: "symlink",
 			newName:  "",
 		},
@@ -73,22 +74,22 @@ func TestHunk(t *testing.T) {
 	diff := setup(t)
 	expectedOrigLines := []DiffLine{
 		{
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   1,
 			Content:  "some",
 			Position: 2,
 		}, {
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   2,
 			Content:  "lines",
 			Position: 3,
 		}, {
-			Mode:     REMOVED,
+			Mode:     DiffLineModeRemoved,
 			Number:   3,
 			Content:  "in",
 			Position: 4,
 		}, {
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   4,
 			Content:  "file1",
 			Position: 5,
@@ -97,22 +98,22 @@ func TestHunk(t *testing.T) {
 
 	expectedNewLines := []DiffLine{
 		{
-			Mode:     ADDED,
+			Mode:     DiffLineModeAdded,
 			Number:   1,
 			Content:  "add a line",
 			Position: 1,
 		}, {
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   2,
 			Content:  "some",
 			Position: 2,
 		}, {
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   3,
 			Content:  "lines",
 			Position: 3,
 		}, {
-			Mode:     UNCHANGED,
+			Mode:     DiffLineModeUnchanged,
 			Number:   4,
 			Content:  "file1",
 			Position: 5,

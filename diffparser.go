@@ -4,23 +4,34 @@
 package diffparser
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"errors"
 )
 
 // FileMode represents the file status in a diff
 type FileMode int
 
 const (
+	// FileModeDeleted if the file is deleted
+	FileModeDeleted FileMode = iota
+	// FileModeModified if the file is modified
+	FileModeModified
+	// FileModeNew if the file is created and there is no diff
+	FileModeNew
+)
+
+const (
 	// DELETED if the file is deleted
-	DELETED FileMode = iota
+	// Deprecated: use FileModeDeleted instead.
+	DELETED = FileModeDeleted
 	// MODIFIED if the file is modified
-	MODIFIED
+	// Deprecated: use FileModeModified instead.
+	MODIFIED = FileModeModified
 	// NEW if the file is created and there is no diff
-	NEW
+	// Deprecated: use FileModeNew instead.
+	NEW = FileModeNew
 )
 
 // DiffRange contains the DiffLine's
@@ -40,12 +51,24 @@ type DiffRange struct {
 type DiffLineMode rune
 
 const (
+	// DiffLineModeAdded if the line is added (shown green in diff)
+	DiffLineModeAdded DiffLineMode = iota
+	// DiffLineModeRemoved if the line is deleted (shown red in diff)
+	DiffLineModeRemoved
+	// DiffLineModeUnchanged if the line is unchanged (not colored in diff)
+	DiffLineModeUnchanged
+)
+
+const (
 	// ADDED if the line is added (shown green in diff)
-	ADDED DiffLineMode = iota
+	// Deprecated: use DiffLineModeAdded instead.
+	ADDED = DiffLineModeAdded
 	// REMOVED if the line is deleted (shown red in diff)
-	REMOVED
+	// Deprecated: use DiffLineModeRemoved instead.
+	REMOVED = DiffLineModeRemoved
 	// UNCHANGED if the line is unchanged (not colored in diff)
-	UNCHANGED
+	// Deprecated: use DiffLineModeUnchanged instead.
+	UNCHANGED = DiffLineModeUnchanged
 )
 
 // DiffLine is the least part of an actual diff
@@ -62,6 +85,11 @@ type DiffHunk struct {
 	OrigRange  DiffRange
 	NewRange   DiffRange
 	WholeRange DiffRange
+}
+
+// Length returns the hunks line length
+func (hunk *DiffHunk) Length() int {
+	return len(hunk.WholeRange.Lines) + 1
 }
 
 // DiffFile is the sum of diffhunks and holds the changes of the file features
@@ -81,10 +109,6 @@ type Diff struct {
 	PullID uint `sql:"index"`
 }
 
-func (d *Diff) addFile(file *DiffFile) {
-	d.Files = append(d.Files, file)
-}
-
 // Changed returns a map of filename to lines changed in that file. Deleted
 // files are ignored.
 func (d *Diff) Changed() map[string][]int {
@@ -97,7 +121,7 @@ func (d *Diff) Changed() map[string][]int {
 
 		for _, h := range f.Hunks {
 			for _, dl := range h.NewRange.Lines {
-				if dl.Mode == ADDED { // TODO(waigani) return removed
+				if dl.Mode == DiffLineModeAdded { // TODO(waigani) return removed
 					dFiles[f.NewName] = append(dFiles[f.NewName], dl.Number)
 				}
 			}
@@ -107,43 +131,46 @@ func (d *Diff) Changed() map[string][]int {
 	return dFiles
 }
 
-func regFind(s string, reg string, group int) string {
-	re := regexp.MustCompile(reg)
-	return re.FindStringSubmatch(s)[group]
-}
-
-func lineMode(line string) (*DiffLineMode, error) {
-	var m DiffLineMode
+func lineMode(line string) (DiffLineMode, error) {
 	switch line[:1] {
 	case " ":
-		m = UNCHANGED
+		return DiffLineModeUnchanged, nil
 	case "+":
-		m = ADDED
+		return DiffLineModeAdded, nil
 	case "-":
-		m = REMOVED
+		return DiffLineModeRemoved, nil
 	default:
-		return nil, errors.New("could not parse line mode for line: \"" + line + "\"")
+		return DiffLineMode(0), errors.New("could not parse line mode for line: \"" + line + "\"")
 	}
-	return &m, nil
 }
+
+const (
+	oldFilePrefix = "--- a/"
+	newFilePrefix = "+++ b/"
+)
+
+var (
+	reinReg       = regexp.MustCompile(`^index .+$`)
+	rempReg       = regexp.MustCompile(`^(-|\+){3} .+$`)
+	hunkHeaderReg = regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@ ?(.+)?`)
+)
 
 // Parse takes a diff, such as produced by "git diff", and parses it into a
 // Diff struct.
 func Parse(diffString string) (*Diff, error) {
-	var diff Diff
-	diff.Raw = diffString
-	lines := strings.Split(diffString, "\n")
+	var (
+		diff  = Diff{Raw: diffString}
+		lines = strings.Split(diffString, "\n")
 
-	var file *DiffFile
-	var hunk *DiffHunk
-	var ADDEDCount int
-	var REMOVEDCount int
-	var inHunk bool
-	oldFilePrefix := "--- a/"
-	newFilePrefix := "+++ b/"
+		file         *DiffFile
+		hunk         *DiffHunk
+		addedCount   int
+		removedCount int
+		inHunk       bool
 
-	var diffPosCount int
-	var firstHunkInFile bool
+		diffPosCount    int
+		firstHunkInFile bool
+	)
 	// Parse each line of diff.
 	for idx, l := range lines {
 		diffPosCount++
@@ -155,15 +182,13 @@ func Parse(diffString string) (*Diff, error) {
 			file = &DiffFile{}
 			header := l
 			if len(lines) > idx+3 {
-				rein := regexp.MustCompile(`^index .+$`)
-				remp := regexp.MustCompile(`^(-|\+){3} .+$`)
 				index := lines[idx+1]
-				if rein.MatchString(index) {
+				if reinReg.MatchString(index) {
 					header = header + "\n" + index
 				}
 				mp1 := lines[idx+2]
 				mp2 := lines[idx+3]
-				if remp.MatchString(mp1) && remp.MatchString(mp2) {
+				if rempReg.MatchString(mp1) && rempReg.MatchString(mp2) {
 					header = header + "\n" + mp1 + "\n" + mp2
 				}
 			}
@@ -172,11 +197,11 @@ func Parse(diffString string) (*Diff, error) {
 			firstHunkInFile = true
 
 			// File mode.
-			file.Mode = MODIFIED
+			file.Mode = FileModeModified
 		case l == "+++ /dev/null":
-			file.Mode = DELETED
+			file.Mode = FileModeDeleted
 		case l == "--- /dev/null":
-			file.Mode = NEW
+			file.Mode = FileModeNew
 		case strings.HasPrefix(l, oldFilePrefix):
 			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
 		case strings.HasPrefix(l, newFilePrefix):
@@ -193,8 +218,7 @@ func Parse(diffString string) (*Diff, error) {
 			file.Hunks = append(file.Hunks, hunk)
 
 			// Parse hunk heading for ranges
-			re := regexp.MustCompile(`@@ \-(\d+),?(\d+)? \+(\d+),?(\d+)? @@ ?(.+)?`)
-			m := re.FindStringSubmatch(l)
+			m := hunkHeaderReg.FindStringSubmatch(l)
 			if len(m) < 5 {
 				return nil, errors.New("Error parsing line: " + l)
 			}
@@ -237,15 +261,15 @@ func Parse(diffString string) (*Diff, error) {
 			}
 
 			// (re)set line counts
-			ADDEDCount = hunk.NewRange.Start
-			REMOVEDCount = hunk.OrigRange.Start
+			addedCount = hunk.NewRange.Start
+			removedCount = hunk.OrigRange.Start
 		case inHunk && isSourceLine(l):
 			m, err := lineMode(l)
 			if err != nil {
 				return nil, err
 			}
 			line := DiffLine{
-				Mode:     *m,
+				Mode:     m,
 				Content:  l[1:],
 				Position: diffPosCount,
 			}
@@ -253,27 +277,27 @@ func Parse(diffString string) (*Diff, error) {
 			origLine := line
 
 			// add lines to ranges
-			switch *m {
-			case ADDED:
-				newLine.Number = ADDEDCount
+			switch m {
+			case DiffLineModeAdded:
+				newLine.Number = addedCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
 				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &newLine)
-				ADDEDCount++
+				addedCount++
 
-			case REMOVED:
-				origLine.Number = REMOVEDCount
+			case DiffLineModeRemoved:
+				origLine.Number = removedCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
 				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &origLine)
-				REMOVEDCount++
+				removedCount++
 
-			case UNCHANGED:
-				newLine.Number = ADDEDCount
+			case DiffLineModeUnchanged:
+				newLine.Number = addedCount
 				hunk.NewRange.Lines = append(hunk.NewRange.Lines, &newLine)
 				hunk.WholeRange.Lines = append(hunk.WholeRange.Lines, &newLine)
-				origLine.Number = REMOVEDCount
+				origLine.Number = removedCount
 				hunk.OrigRange.Lines = append(hunk.OrigRange.Lines, &origLine)
-				ADDEDCount++
-				REMOVEDCount++
+				addedCount++
+				removedCount++
 			}
 		}
 	}
@@ -289,9 +313,4 @@ func isSourceLine(line string) bool {
 		return false
 	}
 	return true
-}
-
-// Length returns the hunks line length
-func (hunk *DiffHunk) Length() int {
-	return len(hunk.WholeRange.Lines) + 1
 }
