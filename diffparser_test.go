@@ -19,7 +19,7 @@ func setup(t *testing.T) *Diff {
 
 	diff, err := Parse(string(byt))
 	require.NoError(t, err)
-	require.Equal(t, len(diff.Files), 8)
+	require.Equal(t, len(diff.Files), 10)
 
 	return diff
 }
@@ -70,6 +70,16 @@ func TestFileModeAndNaming(t *testing.T) {
 			mode:     FileModeModified,
 			origName: "file6",
 			newName:  "file6",
+		},
+		{
+			mode:     FileModeRenamed,
+			origName: "file7",
+			newName:  "file7-renamed",
+		},
+		{
+			mode:     FileModeRenamed,
+			origName: "file8",
+			newName:  "file8-中文",
 		},
 	} {
 		file := diff.Files[i]

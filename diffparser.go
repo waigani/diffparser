@@ -20,6 +20,8 @@ const (
 	FileModeModified
 	// FileModeNew if the file is created and there is no diff
 	FileModeNew
+	// FileModeRenamed if the file is renamed
+	FileModeRenamed
 )
 
 const (
@@ -99,6 +101,8 @@ type DiffFile struct {
 	OrigName   string
 	NewName    string
 	Hunks      []*DiffHunk
+	// SimilarityIndex only valid when the mode is FileModeRenamed, ranging from 0 to 100
+	SimilarityIndex int
 }
 
 // Diff is the collection of DiffFiles
@@ -149,6 +153,9 @@ const (
 	newFilePrefix      = "+++ b/"
 	oldFileQuotePrefix = `--- "a/`
 	newFileQuotePrefix = `+++ "b/`
+	similarityPrefix   = "similarity index "
+	renameFromPrefix   = "rename from "
+	renameToPrefix     = "rename to "
 )
 
 var (
@@ -204,6 +211,9 @@ func Parse(diffString string) (*Diff, error) {
 			file.Mode = FileModeDeleted
 		case l == "--- /dev/null":
 			file.Mode = FileModeNew
+		case strings.HasPrefix(l, similarityPrefix):
+			file.Mode = FileModeRenamed
+			file.SimilarityIndex, _ = strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(l, similarityPrefix), "%"))
 		case strings.HasPrefix(l, oldFilePrefix):
 			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
 		case strings.HasPrefix(l, newFilePrefix):
@@ -214,6 +224,16 @@ func Parse(diffString string) (*Diff, error) {
 		case strings.HasPrefix(l, newFileQuotePrefix):
 			file.NewName = strings.TrimSuffix(strings.TrimPrefix(l, newFileQuotePrefix), `"`)
 			file.NewName = decodeOctalString(file.NewName)
+		case strings.HasPrefix(l, renameFromPrefix):
+			file.OrigName = strings.TrimPrefix(l, renameFromPrefix)
+			if strings.HasPrefix(file.OrigName, `"`) {
+				file.OrigName = decodeOctalString(strings.TrimSuffix(strings.TrimPrefix(file.OrigName, `"`), `"`))
+			}
+		case strings.HasPrefix(l, renameToPrefix):
+			file.NewName = strings.TrimPrefix(l, renameToPrefix)
+			if strings.HasPrefix(file.NewName, `"`) {
+				file.NewName = decodeOctalString(strings.TrimSuffix(strings.TrimPrefix(file.NewName, `"`), `"`))
+			}
 		case strings.HasPrefix(l, "@@ "):
 			if firstHunkInFile {
 				diffPosCount = 0
