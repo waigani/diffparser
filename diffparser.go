@@ -139,8 +139,10 @@ func Parse(diffString string) (*Diff, error) {
 	var ADDEDCount int
 	var REMOVEDCount int
 	var inHunk bool
-	oldFilePrefix := "--- a/"
-	newFilePrefix := "+++ b/"
+	oldFilePrefix1 := "--- a/"
+	oldFilePrefix2 := "rename from "
+	newFilePrefix1 := "+++ b/"
+	newFilePrefix2 := "rename to "
 
 	var diffPosCount int
 	var firstHunkInFile bool
@@ -177,10 +179,14 @@ func Parse(diffString string) (*Diff, error) {
 			file.Mode = DELETED
 		case l == "--- /dev/null":
 			file.Mode = NEW
-		case strings.HasPrefix(l, oldFilePrefix):
-			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
-		case strings.HasPrefix(l, newFilePrefix):
-			file.NewName = strings.TrimPrefix(l, newFilePrefix)
+		case strings.HasPrefix(l, oldFilePrefix1):
+			file.OrigName = strings.TrimPrefix(l, oldFilePrefix1)
+		case strings.HasPrefix(l, newFilePrefix1):
+			file.NewName = strings.TrimPrefix(l, newFilePrefix1)
+		case strings.HasPrefix(l, oldFilePrefix2):
+			file.OrigName = strings.TrimPrefix(l, oldFilePrefix2)
+		case strings.HasPrefix(l, newFilePrefix2):
+			file.NewName = strings.TrimPrefix(l, newFilePrefix2)
 		case strings.HasPrefix(l, "@@ "):
 			if firstHunkInFile {
 				diffPosCount = 0

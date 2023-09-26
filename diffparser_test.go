@@ -19,7 +19,7 @@ func setup(t *testing.T) *Diff {
 
 	diff, err := Parse(string(byt))
 	require.NoError(t, err)
-	require.Equal(t, len(diff.Files), 6)
+	require.Equal(t, len(diff.Files), 7)
 
 	return diff
 }
@@ -59,6 +59,11 @@ func TestFileModeAndNaming(t *testing.T) {
 			mode:     DELETED,
 			origName: "symlink",
 			newName:  "",
+		},
+		{
+			mode:     MODIFIED,
+			origName: "example",
+			newName:  "example1",
 		},
 	} {
 		file := diff.Files[i]

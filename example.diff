@@ -55,3 +55,7 @@ index 03b9162..0000000
 @@ -1 +0,0 @@
 -symlink-destination
 \ No newline at end of file
+diff --git a/example b/example1
+similarity index 100%
+rename from example
+rename to example1
