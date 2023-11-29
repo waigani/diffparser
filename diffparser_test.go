@@ -19,14 +19,13 @@ func setup(t *testing.T) *Diff {
 
 	diff, err := Parse(string(byt))
 	require.NoError(t, err)
-	require.Equal(t, len(diff.Files), 10)
 
 	return diff
 }
 
 func TestFileModeAndNaming(t *testing.T) {
 	diff := setup(t)
-	for i, expected := range []struct {
+	tts := []struct {
 		mode     FileMode
 		origName string
 		newName  string
@@ -81,7 +80,14 @@ func TestFileModeAndNaming(t *testing.T) {
 			origName: "file8",
 			newName:  "file8-中文",
 		},
-	} {
+		{
+			mode:     FileModeModified,
+			origName: "file9.png",
+			newName:  "file9.png",
+		},
+	}
+	require.Equal(t, len(diff.Files), len(tts))
+	for i, expected := range tts {
 		file := diff.Files[i]
 		t.Logf("testing file: %v", file)
 		require.Equal(t, expected.mode, file.Mode)

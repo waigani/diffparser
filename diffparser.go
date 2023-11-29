@@ -149,13 +149,12 @@ func lineMode(line string) (DiffLineMode, error) {
 }
 
 const (
-	oldFilePrefix      = "--- a/"
-	newFilePrefix      = "+++ b/"
-	oldFileQuotePrefix = `--- "a/`
-	newFileQuotePrefix = `+++ "b/`
-	similarityPrefix   = "similarity index "
-	renameFromPrefix   = "rename from "
-	renameToPrefix     = "rename to "
+	oldFilePrefix    = "--- "
+	newFilePrefix    = "+++ "
+	similarityPrefix = "similarity index "
+	renameFromPrefix = "rename from "
+	renameToPrefix   = "rename to "
+	binaryPrefix     = "Binary files "
 )
 
 var (
@@ -215,25 +214,22 @@ func Parse(diffString string) (*Diff, error) {
 			file.Mode = FileModeRenamed
 			file.SimilarityIndex, _ = strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(l, similarityPrefix), "%"))
 		case strings.HasPrefix(l, oldFilePrefix):
-			file.OrigName = strings.TrimPrefix(l, oldFilePrefix)
+			file.OrigName = parseFileName(strings.TrimPrefix(l, oldFilePrefix))
 		case strings.HasPrefix(l, newFilePrefix):
-			file.NewName = strings.TrimPrefix(l, newFilePrefix)
-		case strings.HasPrefix(l, oldFileQuotePrefix):
-			file.OrigName = strings.TrimSuffix(strings.TrimPrefix(l, oldFileQuotePrefix), `"`)
-			file.OrigName = decodeOctalString(file.OrigName)
-		case strings.HasPrefix(l, newFileQuotePrefix):
-			file.NewName = strings.TrimSuffix(strings.TrimPrefix(l, newFileQuotePrefix), `"`)
-			file.NewName = decodeOctalString(file.NewName)
+			file.NewName = parseFileName(strings.TrimPrefix(l, newFilePrefix))
 		case strings.HasPrefix(l, renameFromPrefix):
-			file.OrigName = strings.TrimPrefix(l, renameFromPrefix)
-			if strings.HasPrefix(file.OrigName, `"`) {
-				file.OrigName = decodeOctalString(strings.TrimSuffix(strings.TrimPrefix(file.OrigName, `"`), `"`))
-			}
+			file.OrigName = parseFileName(strings.TrimPrefix(l, renameFromPrefix))
 		case strings.HasPrefix(l, renameToPrefix):
-			file.NewName = strings.TrimPrefix(l, renameToPrefix)
-			if strings.HasPrefix(file.NewName, `"`) {
-				file.NewName = decodeOctalString(strings.TrimSuffix(strings.TrimPrefix(file.NewName, `"`), `"`))
+			file.NewName = parseFileName(strings.TrimPrefix(l, renameToPrefix))
+		case strings.HasPrefix(l, binaryPrefix):
+			file.Mode = FileModeModified
+			binaryDiffer := strings.TrimSuffix(strings.TrimPrefix(l, binaryPrefix), " differ")
+			fileNames := strings.Split(binaryDiffer, " and ")
+			if len(fileNames) != 2 {
+				return nil, errors.New("invalid binary diff")
 			}
+			file.OrigName = parseFileName(fileNames[0])
+			file.NewName = parseFileName(fileNames[1])
 		case strings.HasPrefix(l, "@@ "):
 			if firstHunkInFile {
 				diffPosCount = 0
@@ -331,6 +327,26 @@ func Parse(diffString string) (*Diff, error) {
 	}
 
 	return &diff, nil
+}
+
+func parseFileName(filenameWithPrefix string) string {
+	if strings.HasPrefix(filenameWithPrefix, "a/") {
+		return strings.TrimPrefix(filenameWithPrefix, "a/")
+	}
+	if strings.HasPrefix(filenameWithPrefix, "b/") {
+		return strings.TrimPrefix(filenameWithPrefix, "b/")
+	}
+	if strings.HasPrefix(filenameWithPrefix, `"`) {
+		filenameWithPrefix = strings.TrimSuffix(strings.TrimPrefix(filenameWithPrefix, `"`), `"`)
+		if strings.HasPrefix(filenameWithPrefix, "a/") {
+			return decodeOctalString(strings.TrimPrefix(filenameWithPrefix, "a/"))
+		}
+		if strings.HasPrefix(filenameWithPrefix, "b/") {
+			return decodeOctalString(strings.TrimPrefix(filenameWithPrefix, "b/"))
+		}
+		return decodeOctalString(filenameWithPrefix)
+	}
+	return filenameWithPrefix
 }
 
 func isSourceLine(line string) bool {
