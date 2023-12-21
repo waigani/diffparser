@@ -135,3 +135,49 @@ func TestHunk(t *testing.T) {
 		require.Equal(t, line, *newRange.Lines[i])
 	}
 }
+
+func TestNewToOriginalFile(t *testing.T) {
+	diff := setup(t)
+	expectedOrigLines := []struct {
+		LineNumber int
+		Expected   int
+	}{
+		{
+			LineNumber: 2,
+			Expected:   1,
+		},
+		{
+			LineNumber: 3,
+			Expected:   2,
+		},
+	}
+
+	for _, line := range expectedOrigLines {
+		actual, err := diff.TranslateNewToOriginal("file1", line.LineNumber)
+		require.NoError(t, err)
+		require.Equal(t, line.Expected, actual)
+	}
+}
+
+func TestOriginalToNew(t *testing.T) {
+	diff := setup(t)
+	expectedOrigLines := []struct {
+		LineNumber int
+		Expected   int
+	}{
+		{
+			LineNumber: 1,
+			Expected:   2,
+		},
+		{
+			LineNumber: 2,
+			Expected:   3,
+		},
+	}
+
+	for _, line := range expectedOrigLines {
+		actual, err := diff.TranslateOriginalToNew("file1", line.LineNumber)
+		require.NoError(t, err)
+		require.Equal(t, line.Expected, actual)
+	}
+}
