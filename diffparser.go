@@ -295,3 +295,70 @@ func isSourceLine(line string) bool {
 func (hunk *DiffHunk) Length() int {
 	return len(hunk.WholeRange.Lines) + 1
 }
+
+func (diff *Diff) TranslateNewToOriginal(fileName string, newLine int) (int, error) {
+	offset := 0
+
+	for _, f := range diff.Files {
+		if f.NewName != fileName {
+			continue
+		}
+
+		for _, hunk := range f.Hunks {
+			for _, line := range hunk.WholeRange.Lines {
+				switch line.Mode {
+				case REMOVED:
+					if newLine+offset < line.Number {
+						return newLine + offset, nil
+					}
+					offset++
+				case ADDED:
+					if newLine < line.Number {
+						return newLine + offset, nil
+					}
+					if newLine == line.Number {
+						return -1, errors.New("line is added in new file, doesn't exist in original")
+					}
+					offset--
+				}
+			}
+		}
+	}
+
+	// If we get out of the loop without finding the line, assume it's outside any hunk's range.
+	return newLine + offset, nil
+}
+
+func (diff *Diff) TranslateOriginalToNew(fileName string, originalLine int) (int, error) {
+	offset := 0
+
+	for _, f := range diff.Files {
+		if f.OrigName != fileName {
+			continue
+		}
+
+		for _, hunk := range f.Hunks {
+			for _, line := range hunk.WholeRange.Lines {
+				switch line.Mode {
+				case ADDED:
+					if originalLine+offset < line.Number {
+						return originalLine + offset, nil
+					}
+					offset++
+				case REMOVED:
+					if originalLine < line.Number {
+						return originalLine + offset, nil
+					}
+					if originalLine == line.Number {
+						// The line was removed from the new version; does not exist in the new file.
+						return 0, errors.New("line is removed in new file, doesn't exist in new version")
+					}
+					offset--
+				}
+			}
+		}
+	}
+
+	// If we get out of the loop without finding the line, assume it's outside any hunk's range.
+	return originalLine + offset, nil
+}
